@@ -1,0 +1,19 @@
+defaults:
+  - _self_
+
+_target_: models.MLP
+input_dim: 33
+
+n_features: [30, 4]  # Total number of features and intrinsic dimension
+n_machines: 10  # Number of machines (partitions)
+n_datapoints: 12500  # Total number of datapoints
+var_0: 2.0  # Variance for class 0
+r_mean_1: 8.0  # Mean radius for class 1
+r_var_1: 2.0  # Variance of radius for class 1
+var_noise: 9.0  # Noise variance for nuisance dimensions
+
+# Balanced data distribution among machines
+split_ratio: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+# Equal distribution of class 0 across machines
+pctg_of_0: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+label: ClassCategory_0
