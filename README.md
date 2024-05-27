@@ -26,7 +26,9 @@ The FedMAP algorithm consists of three main steps:
    - 📜 .gitignore             # Specifies intentionally untracked files to ignore
 
 ## Installation
+Run `docker compose up --build`
 
-To run the experiments:
-`python simulation.py`
+## To run the experiments:
+Open a new Tab and Run `docker exec -it fedmap_container bash`
+Then Run `python simulation.py`
 
