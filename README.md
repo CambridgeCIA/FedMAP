@@ -17,13 +17,12 @@ The FedMAP algorithm consists of three main steps:
 ## Repository Structure
 
 - 📂 FedMAP
-   - 📜 fedmap.py              # Contains the implementation of the FedMAP algorithm
+   - 📂 strategies             # Contains the implementation of the FedMAP aggregation strategy
    - 📜 utils.py               # Utility functions for data preprocessing, model initialization, and other helper functions
    - 📂 models                 # Directory containing the model architectures used in the experiments
    - 📂 datasets               # Directory containing the datasets used in the experiments
-   - 📂 experiments            # Directory containing scripts for running experiments and reproducing results
+   - 📂 config                 # Directory containing hydra configurations experiments setup
    - 📜 README.md              # The file you're currently reading
-   - 📜 .gitignore             # Specifies intentionally untracked files to ignore
 
 ## Installation
 Run `docker compose up --build`
