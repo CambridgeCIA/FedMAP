@@ -127,7 +127,7 @@ def generate_data(n_features, n_machines, n_datapoints, var_0=1., r_mean_1=3., r
         df.columns = [f"Feature_{j}" for j in range(n_feat)] + ["ClassCategory_0", "Machine"]
         
         # Save data to CSV files
-        df.to_csv(f"./datasets/sythetic/partitions_{i}.csv", index=False)
+        df.to_csv(f"./datasets/synthetic/partitions_{i}.csv", index=False)
         
 def generate_data_from_config(cfg):
     """

@@ -4,9 +4,8 @@ defaults:
   - datasets: ???
 
 number_clients: 10
-num_rounds: 5
-epochs: 5
+num_rounds: 20
+epochs: 50
 batch_size: 64
-variance: 10
 num_cpus: 4
 num_gpus: 0.1

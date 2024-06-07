@@ -23,10 +23,3 @@ class MLP(nn.Module):
         Forward pass through the network.
         """
         return self.layers(x)
-
-    def replace_linear_layer(self, params):
-        """
-        Replaces the model parameters of the first layer with the provided weights and biases.
-        """
-        self.layers[0].weight.data = params.layers[0].weight.data
-        self.layers[0].bias.data = params.layers[0].bias.data

@@ -1,4 +1,6 @@
-def write_to_log(message, log_file="../results/logfile.log"):
+RESULT_LOG_FILE = "./results/logfile.log"
+
+def log_results(message):
     """Write a message to a log file."""
-    with open(log_file, "a") as f:
+    with open(RESULT_LOG_FILE, "a") as f:
         f.write(message + "\n")

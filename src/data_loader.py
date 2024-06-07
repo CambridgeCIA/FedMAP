@@ -7,6 +7,7 @@ from torchvision import transforms
 from PIL import Image
 import os
 import gdown
+import zipfile
 
 def load_data_synthetic(path, label):
     """
@@ -91,6 +92,7 @@ def load_image_data(id):
     Returns:
         tuple: Tuple containing train_dataloader and val_dataloader.
     """
+    
     # Set seed for reproducibility
     torch.manual_seed(42)
 
@@ -111,7 +113,14 @@ def load_image_data(id):
     }
 
     # Set the path to the Office-31 dataset directory
-    dataset_dir = './data/public/office-31'
+    dataset_dir = '../datasets/public/office-31'
+    if not os.path.exists(dataset_dir):
+        url = 'https://drive.google.com/uc?id=1zT9yl7qNpgNG1FUHqc7crqshAs29TuQF'
+        output = f'{dataset_dir}/office-31-zip.zip'
+        gdown.download(url, output, quiet=False)
+        # Unzip the Office-31 dataset
+        with zipfile.ZipFile(output, 'r') as zip_ref:
+            zip_ref.extractall(dataset_dir)
     
     # Determine the domain based on the client ID
     if id == 0 or id == 3:

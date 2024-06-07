@@ -1,17 +1,12 @@
 import torch
 import torch.nn as nn
 
-def write_to_log(message, log_file="logfile.log"):
-    """Write a message to a log file."""
-    with open(log_file, "a") as f:
-        f.write(message + "\n")
-
-class MAPLossAll(nn.Module):
-    def __init__(self, gamma, variance):
-        super(MAPLossAll, self).__init__()
+class MAPLoss(nn.Module):
+    def __init__(self, loss_fn, gamma, variance):
+        super(MAPLoss, self).__init__()
         
         self.gamma = gamma  
-        self.ce_loss = nn.BCELoss()
+        self.ce_loss = loss_fn
         self.variance = variance + 1e-8  # Ensure non-zero to avoid division by zero
 
     def forward(self, outputs, targets, model_parameters):
