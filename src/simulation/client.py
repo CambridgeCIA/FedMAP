@@ -37,8 +37,10 @@ class FlowerClient(fl.client.NumPyClient):
         """Fit the model with given parameters and configuration."""
         if config['fit_strategy'] == 'fedmap':
             return self.fit_fedmap(parameters, config)
-        elif config['fit_strategy'] == 'fedavg' or config['fit_strategy'] == 'fedprox':
+        elif config['fit_strategy'] == 'fedavg':
             return self.fit_fedavg(parameters, config)
+        elif config['fit_strategy'] == 'fedprox':
+            return self.fit_fedprox(parameters, config)
         elif config['fit_strategy'] == 'fedbn':
             return self.fit_fedbn(parameters, config)   
     
@@ -66,7 +68,14 @@ class FlowerClient(fl.client.NumPyClient):
         set_params(self.model, parameters)
         
         self.train_fedavg(config)
-        return self.get_parameters(config={}), len(self.trainset.dataset), {}     
+        return self.get_parameters(config={}), len(self.trainset.dataset), {}
+    
+    def fit_fedprox(self, parameters, config):
+        """Fit the model using FedProx strategy."""    
+        set_params(self.model, parameters)
+        
+        self.train_fedprox(config)
+        return self.get_parameters(config={}), len(self.trainset.dataset), {}         
     
     def fit_fedbn(self, parameters, config):
         model_path = f'./src/model_temp/model_{str(self.cid)}.pth'
@@ -84,6 +93,11 @@ class FlowerClient(fl.client.NumPyClient):
     def train_fedavg(self, config):
         epochs = config["epochs"]
         train(self.model, self.trainset, epochs=epochs, device=self.device, cid=self.cid, strategy_name='fedavg', isMultiClass=config["is_multi_class"])
+    
+    def train_fedprox(self, config):
+        epochs = config["epochs"]
+        
+        train(self.model, self.trainset, epochs=epochs, device=self.device, cid=self.cid, strategy_name='fedprox', isMultiClass=config["is_multi_class"], proximal_mu = config["proximal_mu"])
         
     def evaluate(self, parameters, config):
         if config['fit_strategy'] == 'fedmap':

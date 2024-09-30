@@ -7,9 +7,10 @@ import os
 from ..loss_modules import MAPLoss
 from sklearn.metrics import balanced_accuracy_score
 
-def train(net, trainloader, epochs, device: str, cid: str, strategy_name='fedavg', isMultiClass=False, gamma=None, variance=None):
+def train(net, trainloader, epochs, device: str, cid: str, strategy_name='fedavg', isMultiClass=False, gamma=None, variance=None, proximal_mu=0.1):
     """Train the model."""
-
+    global_params = [val.detach().clone() for val in net.parameters()]
+    
     if strategy_name == 'fedmap':
         if isMultiClass:
             loss_fn = nn.CrossEntropyLoss()
@@ -25,7 +26,7 @@ def train(net, trainloader, epochs, device: str, cid: str, strategy_name='fedavg
      
         
     optimizer = torch.optim.Adam(
-        net.parameters(), lr=0.001
+        net.parameters(), lr=0.0001
     )
     
     for epoch in range(epochs):
@@ -38,8 +39,14 @@ def train(net, trainloader, epochs, device: str, cid: str, strategy_name='fedavg
             
             outputs = net(batch_data.to(device)).squeeze()
             loss = criterion(outputs, batch_label, net) if strategy_name == 'fedmap' else criterion(outputs, batch_label) 
-         
+
             optimizer.zero_grad()
+            if strategy_name == "fedprox":
+                proximal_term = 0.0
+                for local_weights, global_weights in zip(net.parameters(), global_params):
+                     proximal_term += torch.square((local_weights - global_weights).norm(2))
+                loss += (proximal_mu / 2) * proximal_term
+            
             loss.backward()
             optimizer.step()
         
@@ -54,8 +61,6 @@ def train(net, trainloader, epochs, device: str, cid: str, strategy_name='fedavg
         epoch_acc = round(correct_predictions / total_predictions, 4)
         print(f"Client>>>>>>>>>>>> {cid} | Epoch {epoch+1} | Loss: {epoch_loss} | Accuracy: {epoch_acc}")
 
-        # if epoch == epochs - 1:
-        #     log_train_metrics_to_csv(cid, epoch_loss, epoch_acc)
     if strategy_name == 'fedmap':
         contribution = calculate_contribution(net, trainloader, gamma, variance, device=device)
 
@@ -85,7 +90,6 @@ def test(net, testloader, device: str, cid: str, isMultiClass=False):
             predicted_labels.extend(predicted.cpu().numpy())
 
             
-    accuracy = round(correct / len(testloader.dataset), 4)
     loss = round(loss / len(testloader.dataset), 4)
     balanced_accuracy = balanced_accuracy_score(true_labels, predicted_labels)
 
