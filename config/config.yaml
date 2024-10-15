@@ -2,10 +2,10 @@ defaults:
   - _self_
   - envs: ???
   - datasets: ???
-
-number_clients: 10
-num_rounds: 20
-epochs: 50
+  
+number_clients: 3
+num_rounds: 3
+epochs: 1
 batch_size: 64
 num_cpus: 4
 num_gpus: 0.1

@@ -1,6 +1,7 @@
 name: synthetic
 model: MLP
 input_dim: 31
+num_classes: 31
 
 n_features: [30, 4]  # Total number of features and intrinsic dimension
 n_machines: 10  # Number of machines (partitions)

@@ -21,8 +21,9 @@ class MAPLoss(nn.Module):
         bce_loss = self.ce_loss(outputs, targets)
         
         total_prior_loss = 0.0
-        for param, gamma in zip(model_parameters, self.gamma):
-            # Compute the Gaussian prior loss as the squared difference between model parameters and gamma
+
+        for param, gamma in zip(model_parameters.parameters(), self.gamma.parameters()):
+            # Compute the prior loss as the squared difference between model parameters and gamma
             total_prior_loss += torch.sum((param - gamma).pow(2)) / (2*self.variance)
               
         # The total loss is the sum of BCE loss and the Gaussian prior loss

@@ -8,11 +8,7 @@ import numpy as np
 import torch
 
 from flwr.common import (
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
     FitRes,
-    MetricsAggregationFn,
     NDArrays,
     Parameters,
     Scalar,
@@ -40,23 +36,13 @@ class FedMAP(fl.server.strategy.FedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
-        # if self.inplace:
-        #     # Does in-place weighted average of results
-        #     aggregated_ndarrays = aggregate_inplace(results)
-        else:
-
-            # Convert results
-            weights_results = [
-                # (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples, fit_res.metrics['weight'])
-                (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
-                for _, fit_res in results
-            ]
-     
-            # aggregated_ndarrays, variance = self.aggregate(weights_results)
-            aggregated_ndarrays = aggregate(weights_results)
-            # variance = 8.0
-            # aggregated_ndarrays.append(np.array(variance))
-                        
+        weights_results = [
+            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
+            for _, fit_res in results
+        ]
+    
+    
+        aggregated_ndarrays = aggregate(weights_results)                 
         parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)
 
         # Aggregate custom metrics if aggregation fn was provided

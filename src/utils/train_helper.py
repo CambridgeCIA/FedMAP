@@ -10,25 +10,19 @@ from sklearn.metrics import balanced_accuracy_score
 def train(net, trainloader, epochs, device: str, cid: str, strategy_name='fedavg', isMultiClass=False, gamma=None, variance=None, proximal_mu=0.1):
     """Train the model."""
     global_params = [val.detach().clone() for val in net.parameters()]
-    
-    if strategy_name == 'fedmap':
-        if isMultiClass:
-            loss_fn = nn.CrossEntropyLoss()
-        else:
-            loss_fn = nn.BCELoss()
-            
-        criterion = MAPLoss(loss_fn, gamma, variance)
-    else:
-        if isMultiClass:
-            criterion = nn.CrossEntropyLoss()
-        else:
-            criterion = nn.BCELoss()
-     
-        
+    criterion = nn.BCELoss()
+
     optimizer = torch.optim.Adam(
         net.parameters(), lr=0.0001
     )
-    
+
+    if isMultiClass:
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+       
+    if strategy_name == 'fedmap':
+        criterion = MAPLoss(criterion, gamma, variance)
+     
     for epoch in range(epochs):
         running_loss = 0.0
         correct_predictions = 0
@@ -51,28 +45,29 @@ def train(net, trainloader, epochs, device: str, cid: str, strategy_name='fedavg
             optimizer.step()
         
             running_loss += loss.item()
-
-            # Calculate accuracy
+            
             predicted = outputs.round()
-            correct_predictions += (predicted == batch_label.to(device)).sum().item()
+            if isMultiClass:
+                 _, predicted = torch.max(outputs, dim=1)
+              
+
+            correct_predictions += (predicted == batch_label).sum().item()
             total_predictions += batch_label.size(0)
 
         epoch_loss = round(running_loss / len(trainloader.dataset), 4)
         epoch_acc = round(correct_predictions / total_predictions, 4)
-        print(f"Client>>>>>>>>>>>> {cid} | Epoch {epoch+1} | Loss: {epoch_loss} | Accuracy: {epoch_acc}")
+        print(f"Epoch {epoch + 1}/{epochs}: train-loss: {epoch_loss}, train-accuracy: {epoch_acc}")
 
     if strategy_name == 'fedmap':
         contribution = calculate_contribution(net, trainloader, gamma, variance, device=device)
-
         return contribution
 
 def test(net, testloader, device: str, cid: str, isMultiClass=False):
     """Validate the model on the test set."""
+    criterion = nn.BCELoss()
     if isMultiClass:
         criterion = nn.CrossEntropyLoss()
-    else:
-        criterion = nn.BCELoss()
-     
+      
     correct, loss, total = 0, 0.0, 0
     true_labels = []
     predicted_labels = []
@@ -83,9 +78,15 @@ def test(net, testloader, device: str, cid: str, isMultiClass=False):
             outputs = net(batch_data.to(device)).squeeze()
             labels = batch_label.to(device)
             loss += criterion(outputs, labels).item()
-            predicted = outputs.round() 
-            total += labels.size(0)
+        
+            predicted = outputs.round()
+            
+            if isMultiClass:
+                _, predicted = torch.max(outputs, dim=1)
+            
+
             correct += (predicted == labels).sum().item()
+            total += labels.size(0)
             true_labels.extend(batch_label.cpu().numpy())
             predicted_labels.extend(predicted.cpu().numpy())
 
@@ -116,7 +117,8 @@ def log_train_metrics_to_csv(cid, train_loss, train_acc):
 
 def log_test_metrics_to_csv(cid, val_loss, val_acc):
     """Log validation metrics to a CSV file."""
-    filename = 'metrics_test.csv'
+    filename = './results/metrics_test.csv'
+
     headers = ['Client_ID', 'Val_Loss', 'Val_Accuracy']
     record = [int(cid) + 1, val_loss, val_acc]
     

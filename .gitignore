@@ -7,7 +7,7 @@ datasets/synthetic/
 src/model_temp/
 # C extensions
 *.so
-
+datasets/public/
 # Distribution / packaging
 .Python
 build/
@@ -34,6 +34,9 @@ MANIFEST
 .pdm.toml
 .pdm-python
 .pdm-build/
+.datasets/public/*
+.datasets/synthetic/*
+*.csv
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/

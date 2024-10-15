@@ -140,15 +140,15 @@ def generate_data_from_config(cfg):
     - Data: Dictionary containing data for each machine
     - rot: Rotation matrix used
     """
-    n_features = cfg.n_features
-    n_machines = cfg.n_machines
-    n_datapoints = cfg.n_datapoints
-    var_0 = cfg.var_0
-    r_mean_1 = cfg.r_mean_1
-    r_var_1 = cfg.r_var_1
-    var_noise = cfg.var_noise
-    split_ratio = cfg.split_ratio
-    pctg_of_0 = cfg.pctg_of_0
+    n_features = cfg.datasets.n_features
+    n_machines = cfg.datasets.n_machines
+    n_datapoints = cfg.datasets.n_datapoints
+    var_0 = cfg.datasets.var_0
+    r_mean_1 = cfg.datasets.r_mean_1
+    r_var_1 = cfg.datasets.r_var_1
+    var_noise = cfg.datasets.var_noise
+    split_ratio = cfg.datasets.split_ratio
+    pctg_of_0 = cfg.datasets.pctg_of_0
     
     generate_data(n_features, n_machines, n_datapoints, 
                          var_0, r_mean_1, r_var_1, var_noise, 
