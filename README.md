@@ -2,6 +2,8 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
+![FedMAP System Architecture](FedMAP_diagram.png)
+
 FedMAP (Federated Maximum A Posteriori) is a novel federated learning (FL) algorithm that incorporates a global prior distribution over local model parameters using Input Convex Neural Networks (ICNNs), enabling personalized federated learning. This repository contains the complete implementation of the FedMAP algorithm with support for multiple healthcare datasets and tasks.
 
 ## Overview
@@ -162,7 +164,7 @@ datasets/interval/
 
 ### eICU Dataset (ICU Mortality Prediction)
 ```
-datasets/eicu/group_A/
+datasets/eicu/
 ├── {hospital_id}/
 │   ├── mortality_train.csv
 │   ├── mortality_val.csv
@@ -242,11 +244,68 @@ This will:
 - Evaluate on clients 
 - Save metrics to `results/{task_name}_metrics_test.csv`
 
+## Quick Start: Running the Example Task
+
+By default, the repository is configured to run the **example task** with synthetic data. You can get started immediately without any additional setup:
+
+### Three-Tier Workflow
+
+**Tier 1 - Federated Training (Clients 0-19):**
+```bash
+bash scripts/run_t1.sh
+```
+This trains the global model and ICNN prior modules, then automatically generates performance plots.
+
+**Tier 2 - Fine-tuning (Clients 20-34):**
+```bash
+bash scripts/run_t2.sh
+```
+This fine-tunes the global model on new clients using the trained ICNN prior, then generates comparison plots.
+
+**Tier 3 - Inference (Clients 35-44):**
+```bash
+bash scripts/run_t3.sh
+```
+This evaluates the global model on completely unseen clients without any fine-tuning, then generates performance plots.
+
+## Performance Metrics and Visualization
+
+Performance metrics are automatically saved to CSV files in the `results/` directory:
+
+**Tier 1 (Training):**
+- `results/{task_name}_metrics_test_tier1.csv` - Validation metrics per round for all Tier 1 clients
+
+
+**Tier 2 (Fine-tuning):**
+- `results/{task_name}_metrics_test_tier2.csv` - Performance metrics for Tier 2 clients
+
+**Tier 3 (Inference):**
+- `results/{task_name}_metrics_test_tier3.csv` - Performance metrics for Tier 3 clients
+
+### Visualization
+
+Performance plots are automatically generated and saved to `results/performance_plots/`:
+
+**Tier 1 plots** (generated automatically):
+- `Accuracy_over_rounds_tier1.png` - Accuracy progression across communication rounds
+- `Balanced_Accuracy_over_rounds_tier1.png` - Balanced accuracy progression
+- `ROC_AUC_over_rounds_tier1.png` - ROC AUC progression
+- `Loss_over_rounds_tier1.png` - Loss progression
+
+Each plot includes:
+- Individual client performance curves
+- Global average line
+- Legend with all clients
+
+**Tier 2 plots & Tier 3 plots**:
+- `balanced_accuracy_tier2.png` - Bar chart of balanced accuracy
+- `roc_auc_tier2.png` - Bar chart of ROC AUC 
+
 ## Algorithm Details
 
 ### FedMAP Objective Function
 
-The FedMAP algorithm (Tier 1) involves each client $k$ minimising a local objective function. This objective is based on Maximum a Posteriori (MAP) estimation and combines the local data loss with a global, learnable ICNN-based prior (see Eq 7 in the paper):
+The FedMAP algorithm involves each client $k$ minimising a local objective function. This objective is based on Maximum a Posteriori (MAP) estimation and combines the local data loss with a global, learnable ICNN-based prior (see Eq 7 in the paper):
 
 $$
 \theta_{k}^{*} = \underset{\theta \in \Theta}{\arg\min} \left( \frac{1}{N_{k}}\mathcal{L}(\theta; Z_{k}) + \mathcal{R}(\theta; \mu, \psi) \right)
@@ -282,7 +341,7 @@ $$
 
 Where $f_{\psi}$ is the ICNN itself, and $\alpha$ and $\epsilon$ are hyperparameters that ensure strong convexity.
 
-## Tested Tasks
+## Supported Tasks
 
 ### 1. INTERVAL (Iron Deficiency Classification)
 - **Model**: DenseClassifier (2-layer dense network)
