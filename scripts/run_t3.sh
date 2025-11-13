@@ -1,1 +1,1 @@
-python src/tiers/tier3_infer.py task=interval
+python src/tiers/tier3_infer.py && python src/utils/plot_t2.py --tier 3

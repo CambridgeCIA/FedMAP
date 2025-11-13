@@ -1,3 +1,4 @@
 task-name="example"
 num-server-rounds = 100
 local-epochs = 10
+learning-rate = 0.001

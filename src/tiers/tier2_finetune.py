@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-Fine-tune global model with ICNN-based FedMAP prior on selected clients.
+Fine-tune global model with ICNN-based FedMAP prior on Tier 2 clients.
 
 - Uses a trained global model as initialization.
 - Loads saved ICNN modules.
 - Runs a few local epochs of FedMAP fine-tuning.
-- Records validation metrics via Example._record_performance().
-- Loops through client_id = 4, 5, 6.
 """
 
 import os
@@ -54,7 +52,7 @@ def run_finetune_for_client(
 
 
     best_state_dict, contribution = client.train()
-    avg_loss, metrics = client.validate()
+    avg_loss, metrics = client.validate(tier=2)
 
     print(f"\nClient {cid} | Contribution: {contribution:.6f}")
     print("Validation metrics:")
@@ -83,7 +81,7 @@ def main():
 
     all_results = {}
 
-    for cid in range(4, 7):
+    for cid in range(20, 35):
         _, _, metrics = run_finetune_for_client(
             cid=cid,
             global_state_dict=global_state_dict,
@@ -99,7 +97,7 @@ def main():
 
 
     print("\n" + "#" * 70)
-    print("Fine-tuning summary for clients 4–6")
+    print("Fine-tuning summary for clients 20–34")
     print("#" * 70)
     for cid, res in all_results.items():
         m = res["metrics"]

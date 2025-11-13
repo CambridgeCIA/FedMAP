@@ -106,20 +106,17 @@ class eICU:
   
     def _load_data_by_id(self, batch_size=32, mode='train', seed=42):
         """
-        Load data for specific hospital ID.
-        
         Args:
-            batch_size: Batch size for data loaders
+            batch_size: Batch size for data loader
             seed: Random seed for reproducibility
-            
+
         Returns:
-            train_loader: Training data loader
-            val_loader: Validation data loader
-            input_dims: Tuple of input dimensions
+            data_loader: Data loader containing all samples
+            input_dims: Tuple of input dimensions (if needed)
         """
-        base_path = '/app/datasets/eicu/group_A'
+        base_path = '/datasets/eicu/group_A'
         hospital_id = SITES_A[self.cid]
-        
+
         try:
             mortality = pd.read_csv(
                 f'{base_path}/{hospital_id}/mortality_{mode}.csv',
@@ -139,18 +136,18 @@ class eICU:
                 index_col='patientunitstayid'
             )
         except FileNotFoundError:
-            print("="*50)
+            print("=" * 50)
             print(f"ERROR: Data files not found for hospital {hospital_id} at: {base_path}")
             print("Please update the `data_path` in config")
-            print("="*50)
+            print("=" * 50)
             raise
 
-   
+  
         drugs_scaled = drugs.apply(minmaxscale, axis=1)
         dx_scaled = dx.apply(minmaxscale, axis=1)
         physio_scaled = physio.apply(minmaxscale, axis=1)
 
-     
+
         patient_ids = list(
             set(drugs_scaled.index) & set(dx_scaled.index) &
             set(physio_scaled.index) & set(mortality.index)
@@ -159,73 +156,51 @@ class eICU:
         if not patient_ids:
             raise ValueError(f"No valid patient IDs for hospital {hospital_id} after intersection.")
 
- 
         drugs_scaled = drugs_scaled.loc[patient_ids]
         dx_scaled = dx_scaled.loc[patient_ids]
         physio_scaled = physio_scaled.loc[patient_ids]
         mortality = mortality.loc[patient_ids]
 
-
         labels = mortality['expired'].astype(int).values
         n_positive = sum(labels)
         n_negative = len(labels) - n_positive
         print(f"Hospital {hospital_id} - Total samples: {len(labels)}, "
-              f"Positive: {n_positive}, Negative: {n_negative}")
+            f"Positive: {n_positive}, Negative: {n_negative}")
 
         if n_positive == 0 or len(labels) < batch_size:
             raise ValueError(f"Hospital {hospital_id} has no positive samples or too few samples ({len(labels)}).")
 
-        
-        train_ids, val_ids = train_test_split(
-            patient_ids,
-            test_size=0.3,
-            stratify=labels,
-            random_state=seed
-        )
+        # --- Create dataset and weighted sampler ---
+        dataset = MultiModalDataset(drugs_scaled, dx_scaled, physio_scaled, mortality, patient_ids)
 
-        if sum(mortality.loc[val_ids]['expired'].astype(int).values) == 0:
-            raise ValueError(f"Validation set for hospital {hospital_id} has no positive samples.")
-
- 
-        train_dataset = MultiModalDataset(drugs_scaled, dx_scaled, physio_scaled, mortality, train_ids)
-        val_dataset = MultiModalDataset(drugs_scaled, dx_scaled, physio_scaled, mortality, val_ids)
-
-        train_labels = mortality.loc[train_ids]['expired'].astype(int).values
-        class_counts = np.bincount(train_labels)
+        class_counts = np.bincount(labels)
         class_weights = np.array([1.0 / count if count > 0 else 0.0 for count in class_counts])
-        sample_weights = np.array([class_weights[label] for label in train_labels])
-        
-        train_sampler = WeightedRandomSampler(
+        sample_weights = np.array([class_weights[label] for label in labels])
+
+        sampler = WeightedRandomSampler(
             weights=sample_weights,
             num_samples=len(sample_weights),
             replacement=True
         )
 
+        effective_batch_size = min(batch_size, len(patient_ids) // 2)
 
-        effective_batch_size = min(batch_size, len(train_ids) // 2)
-        
-        train_loader = DataLoader(
-            train_dataset,
+        data_loader = DataLoader(
+            dataset,
             batch_size=effective_batch_size,
-            sampler=train_sampler,
+            sampler=sampler,
             drop_last=True
         )
-        
-        val_loader = DataLoader(
-            val_dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            drop_last=False
-        )
 
-        return train_loader, val_loader
+        return data_loader
+
     
     def train_loader(self, batch_size=32):
-        train_loader, _ = self._load_data_by_id(batch_size, mode='train')
+        train_loader = self._load_data_by_id(batch_size, mode='train')
         return train_loader
 
     def val_loader(self, batch_size=32):
-        _, val_loader = self._load_data_by_id(batch_size, mode='val')
+        val_loader = self._load_data_by_id(batch_size, mode='val')
         return val_loader
 
     def train(self, patience=3, batch_size=32):
@@ -317,7 +292,7 @@ class eICU:
         contribution = self._calculate_contribution()
         return best_state_dict, contribution
 
-    def validate(self, batch_size=32):
+    def validate(self, batch_size=32, tier=1):
         """
         Validate the model on validation set.
         
@@ -398,9 +373,10 @@ class eICU:
             "tp": int(tp)
         }
         
+        self._record_performance(self.server_round, metrics, tier)
         return avg_loss, metrics
 
-    def _record_performance(self, round_num, metrics):
+    def _record_performance(self, round_num, metrics, tier=1):
         """
         Log validation/test metrics to a CSV file.
         

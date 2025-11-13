@@ -1,1 +1,1 @@
-flwr run . --run-config="./config/task/example.toml"
+flwr run . --run-config="./config/task/example.toml" && python src/utils/plot_t1.py

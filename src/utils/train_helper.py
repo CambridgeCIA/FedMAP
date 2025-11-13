@@ -65,7 +65,6 @@ def train(net, trainloader, valloader, gamma, prior, device, local_epochs, patie
             
             optimizer.zero_grad()
             outputs = net(batch_data)
-            # loss = criterion(outputs, batch_label, net)
             loss = criterion(outputs, batch_label) 
             loss.backward()
             torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=1.0)
@@ -74,14 +73,12 @@ def train(net, trainloader, valloader, gamma, prior, device, local_epochs, patie
 
         train_loss /= len(trainloader.dataset)
 
-        # Validation loop for early stopping
         net.eval()
         val_loss = 0.0
         with torch.no_grad():
             for batch_data, batch_label in valloader:
                 batch_data, batch_label = batch_data.to(device), batch_label.to(device)
                 outputs = net(batch_data)
-                # loss = criterion(outputs, batch_label, net)
                 loss = criterion(outputs, batch_label) 
                 val_loss += loss.item() * batch_data.size(0)
 

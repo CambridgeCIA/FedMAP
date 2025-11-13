@@ -16,6 +16,7 @@ dependencies = [
     "pyarrow==16.1.0",
     "pycox==0.3.0",
     "torchtuples==0.2.2",
+    "seaborn==0.13.2",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -41,9 +42,9 @@ model= "DenseClassifier"
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 10
+options.num-supernodes = 20
 
 [tool.flwr.federations.local-simulation-gpu]
-options.num-supernodes = 10
+options.num-supernodes = 20
 options.backend.client-resources.num-cpus = 1 
 options.backend.client-resources.num-gpus = 0.1 

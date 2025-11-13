@@ -33,7 +33,7 @@ def run_validation_for_client(
     client = Example(cid=cid, config=config, device=device)
     client.set_models(global_model=global_state_dict, cnnet_modules=None)
 
-    avg_loss, metrics = client.validate()
+    avg_loss, metrics = client.validate(tier=3)
 
     print("\nValidation metrics:")
     for k, v in metrics.items():
@@ -54,7 +54,7 @@ def main():
 
     all_results = {}
 
-    for cid in range(7, 10):
+    for cid in range(35, 45):
         metrics = run_validation_for_client(
             cid=cid,
             global_state_dict=global_state_dict,
@@ -64,7 +64,7 @@ def main():
         all_results[cid] = metrics
 
     print("\n" + "#" * 70)
-    print("Validation summary for clients 7–9")
+    print("Validation summary for clients 35–44")
     print("#" * 70)
 
     for cid, m in all_results.items():

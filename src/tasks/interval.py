@@ -68,7 +68,7 @@ class Interval:
         self.local_model.load_state_dict(global_model)
           
     def _load_data_by_id(self, batch_size=128):
-        base_path = "/app/datasets/interval" 
+        base_path = "datasets/interval" 
 
         files = [
             {"train": "INTERVAL_irondef_site_1_train.csv", "val": "INTERVAL_irondef_site_1_val.csv"},
@@ -199,7 +199,7 @@ class Interval:
         contribution = self._calculate_contribution()
         return best_state_dict, contribution
 
-    def validate(self, batch_size=128):
+    def validate(self, batch_size=128, tier=1):
         testloader = self.val_loader(batch_size)
         
         self.local_model.eval()
@@ -262,18 +262,18 @@ class Interval:
             "tp": int(tp)
         }
         try:
-           self._record_performance(self.server_round, metrics)
+           self._record_performance(self.server_round, metrics, tier)
         except Exception:
             pass
         return avg_loss, metrics
     
 
-    def _record_performance(self, round_num, metrics):
+    def _record_performance(self, round_num, metrics, tier=1):
         """
         Log validation/test metrics to a CSV file.
         Based on 'log_test_metrics_to_csv' function.
         """
-        filename = './results/interval_metrics_test.csv'
+        filename = f'./results/interval_metrics_test_tier{tier}.csv'
         
         os.makedirs(os.path.dirname(filename), exist_ok=True)
 

@@ -64,7 +64,7 @@ def evaluate(msg: Message, context: Context) -> Message:
         task = Example(config=msg.content["config"], device=device, cid=client_id)   
 
     task.set_models(msg.content["arrays"].to_torch_state_dict(), None)
-    loss, metrics = task.validate()
+    loss, metrics = task.validate(tier=1)
 
     print(f"Client {context.node_id} evaluate: "
           f"Loss={loss:.4f}, "

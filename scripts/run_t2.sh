@@ -1,1 +1,1 @@
-python src/tiers/tier2_finetune.py task=interval
+python src/tiers/tier2_finetune.py && python src/utils/plot_t2.py --tier 2

@@ -1,4 +1,5 @@
 task-name="interval"
 model="DenseClassifier"
-num-server-rounds = 5
-local-epochs = 5
+num-server-rounds = 50
+local-epochs = 2
+learning-rate = 0.001

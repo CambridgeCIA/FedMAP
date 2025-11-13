@@ -23,6 +23,7 @@ def main(grid: Grid, context: Context) -> None:
     local_epochs: int = context.run_config["local-epochs"]
     fraction_evaluate: float = context.run_config["fraction-evaluate"]
     task_name: str = context.run_config["task-name"]
+    learning_rate: float = context.run_config.get("learning-rate", 0.001)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Server using device: {device}")
@@ -60,7 +61,7 @@ def main(grid: Grid, context: Context) -> None:
 
 
     print(f"Starting FedMAP strategy for {num_rounds} rounds...")
-    config = ConfigRecord({"lr": 0.001, "local_epochs": local_epochs, "task_name": task_name})
+    config = ConfigRecord({"lr": learning_rate, "local_epochs": local_epochs, "task_name": task_name})
     result = strategy.start(
         grid=grid,
         initial_arrays=arrays,

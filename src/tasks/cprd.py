@@ -18,7 +18,6 @@ import torchtuples as tt
 from collections import OrderedDict
 
 from src.utils.train_helper import InputConvexNN
-from src.loss_modules.map import FedMAPLoss, ICNNPrior
 
 GROUP_A = [670, 206, 272, 263, 229, 515, 351, 88, 677, 473, 194, 147, 111]
 
@@ -247,29 +246,25 @@ class CPRD:
             global_model_state: State dict of the global CoxPH model
             cnnet_modules_state: State dict of ICNN modules (OrderedDict) or nn.ModuleDict
         """
-        # Prepare data if not already done
+ 
         if self.input_features is None:
             self._prepare_hospital_data()
         
-        # Initialize local model
+
         local_net = self._get_coxph_net(self.input_features, self.num_hidden_nodes)
         if global_model_state is not None:
             local_net.load_state_dict(global_model_state)
         
-        # Initialize global model for prior
+
         global_net = self._get_coxph_net(self.input_features, self.num_hidden_nodes)
         if global_model_state is not None:
             global_net.load_state_dict(global_model_state)
         
-        # Reconstruct ICNN modules from state dict if needed
+
         if cnnet_modules_state is not None:
             if isinstance(cnnet_modules_state, (dict, OrderedDict)):
-                # It's a state dict - need to reconstruct the modules
                 print(f"Reconstructing ICNN modules from state dict with {len(cnnet_modules_state)} parameters")
                 
-                from src.utils.train_helper import InputConvexNN
-                
-                # Create ModuleDict with ICNN modules
                 icnn_dict = {}
                 for name, param in local_net.named_parameters():
                     param_size = param.numel()
@@ -283,34 +278,28 @@ class CPRD:
                 
                 self.cnnet_modules = nn.ModuleDict(icnn_dict)
                 
-                # Load the state dict into the modules
+
                 self.cnnet_modules.load_state_dict(cnnet_modules_state)
             else:
-                # It's already a ModuleDict or ModuleList
                 self.cnnet_modules = cnnet_modules_state
         else:
             self.cnnet_modules = None
         
-        # Create FedMAP model
         self.local_model = CoxPHFedMAP(
             local_net, global_net, self.cnnet_modules,
             tt.optim.Adam, self.device, self.lambda_prior
         )
         
-        # Store global model reference
+
         self.global_model = global_net
-        
-        # Set learning rate
         self.local_model.optimizer.set_lr(self.lr)
     
     def train_loader(self, batch_size=128):
-        """Returns training data for CoxPH"""
         if self.train_data is None:
             self._prepare_hospital_data()
         return self.train_data
     
     def val_loader(self, batch_size=128):
-        """Returns validation data for CoxPH"""
         if self.val_data is None:
             self._prepare_hospital_data()
         return self.val_data
@@ -330,10 +319,9 @@ class CPRD:
         if self.local_model is None:
             raise ValueError("Models not initialized. Call set_models() first.")
         
-        # Get training data
+  
         x_train_tensor, y_train_tuple = self.train_data
         
-        # Calculate effective batch size
         effective_batch_size = max(2, min(batch_size, len(x_train_tensor) // 4))
         if len(x_train_tensor) % effective_batch_size == 1:
             effective_batch_size = max(2, effective_batch_size - 1)
@@ -341,10 +329,10 @@ class CPRD:
         print(f"Client {self.cid} (Hospital {self.hospital_id}) - "
               f"Training with batch size: {effective_batch_size}")
         
-        # Setup callbacks
+  
         callbacks = [tt.cb.EarlyStopping(patience=patience)]
         
-        # Train the model
+
         log = self.local_model.fit(
             x_train_tensor, y_train_tuple,
             effective_batch_size, self.local_epochs,
@@ -352,7 +340,7 @@ class CPRD:
             val_data=self.val_data
         )
         
-        # Extract training metrics
+
         log_df = log.to_pandas() if hasattr(log, 'to_pandas') else pd.DataFrame()
         final_train_loss = (log_df['train_loss'].iloc[-1] 
                            if not log_df.empty and 'train_loss' in log_df.columns 
@@ -364,15 +352,15 @@ class CPRD:
         print(f"Client {self.cid} - Train Loss: {final_train_loss:.4f}, "
               f"Val Loss: {final_val_loss:.4f}")
         
-        # Calculate contribution
+
         contribution = self._calculate_contribution()
         
-        # Get best model state
+
         best_state_dict = self.local_model.net.state_dict()
         
         return best_state_dict, contribution
     
-    def validate(self, batch_size=128):
+    def validate(self, batch_size=128, tier=1):
         """
         Validate the model on test set.
         
@@ -395,19 +383,17 @@ class CPRD:
         try:
             x_test_tensor = torch.from_numpy(x_test).float().to(self.device)
             
-            # Compute baseline hazards (using test data as proxy)
+
             _ = self.local_model.compute_baseline_hazards(
                 x_test_tensor, (durations_test, events_test)
             )
             
-            # Predictions - get survival function
+
             surv = self.local_model.predict_surv_df(x_test_tensor)
-            
-            # Evaluation using EvalSurv
+
             ev = EvalSurv(surv, durations_test, events_test, censor_surv="km")
             concordance = float(ev.concordance_td())
-            
-            # Brier score with proper time grid
+
             integrated_brier_score = None
             if durations_test.max() > durations_test.min():
                 time_grid = np.linspace(durations_test.min(), durations_test.max(), 100)
@@ -498,7 +484,7 @@ class CPRD:
                     if len(list(first_cnnet.parameters())) > 0 
                     else torch.float32)
         
-        # Compute prior using the same helper functions as INTERVAL
+
         if isinstance(self.cnnet_modules, nn.ModuleDict):
             prior_term = self._compute_prior_module_dict(
                 self.local_model.net, 
@@ -516,7 +502,7 @@ class CPRD:
                 cnnet_dtype
             )
         
-        # Calculate contribution using SAME FORMULA as INTERVAL
+
         log_contribution = mean_loglik - (prior_term / N)
         contribution = float(math.exp(log_contribution))
         
@@ -524,6 +510,7 @@ class CPRD:
             f"(mean_loglik: {mean_loglik:.4f}, prior_term: {prior_term:.4f})")
         
         return contribution
+    
     def _compute_prior_module_list(
         self,
         net: nn.Module, 
@@ -571,7 +558,7 @@ class CPRD:
             prior_term += cnnet(theta_flat, mu_flat).sum().item()
         
         return prior_term
-    def _record_performance(self, round_num, metrics, filename='../results/cprd_metrics.csv'):
+    def _record_performance(self, round_num, metrics, tier=1):
         """
         Log validation/test metrics to a CSV file.
         
@@ -580,6 +567,7 @@ class CPRD:
             metrics: Dictionary of metrics to log
             filename: Path to CSV file
         """
+        filename=f'../results/cprd_metrics_tier{tier}.csv'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         
         headers = ['Client_ID', 'Hospital_ID', 'Round', 'Concordance', 

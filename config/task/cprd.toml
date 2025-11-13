@@ -1,4 +1,5 @@
 task-name="cprd"
 model="CoxPH"
-num-server-rounds = 5
-local-epochs = 5
+num-server-rounds = 100
+local-epochs = 10
+learning-rate = 0.001
