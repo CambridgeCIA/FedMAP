@@ -433,7 +433,7 @@ If you use FedMAP in your research, please cite:
   url={https://arxiv.org/abs/2405.19000}
 }
 
-
+```
 
 ## License
 
@@ -450,5 +450,4 @@ For questions or issues, please open an issue on GitHub or contact the maintaine
 ## Acknowledgments
 
 - Built on the [Flower](https://flower.dev/) federated learning framework
-- Uses PyTorch for deep learning
 - Survival analysis powered by [pycox](https://github.com/havakv/pycox)
