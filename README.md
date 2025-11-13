@@ -70,8 +70,8 @@ FedMAP/
 ├── Dockerfile               # Docker container configuration
 ├── docker-compose.yml       # Docker Compose setup
 ├── pyproject.toml          # Project metadata and dependencies
-├── requirements.txt        # Python dependencies (if used)
-└── README.md               # This file
+├── requirements.txt        # Python dependencies
+└── README.md               
 ```
 
 ## Installation
@@ -99,7 +99,6 @@ FedMAP/
    - Build a Docker image based on PyTorch 2.3.0 with CUDA 12.1
    - Install Python 3.10 and all required dependencies
    - Mount the current directory to `/app` in the container
-   - Allocate 100GB shared memory for training
    - Enable GPU support (if available)
 
 3. **Access the container**
@@ -221,18 +220,13 @@ bash scripts/run_t1.sh
 Fine-tune the trained global model on new clients with ICNN prior:
 
 ```bash
-python src/tiers/tier2_finetune.py task=interval
-```
-
-Or using the shell script:
-```bash
 bash scripts/run_t2.sh
 ```
 
 This will:
 - Load the trained global model from `src/checkpoints/global_model_{task_name}.pt`
 - Load the trained ICNN modules from `src/checkpoints/icnn_modules.pt`
-- Fine-tune on clients 4, 5, 6 (by default)
+- Fine-tune on clients
 - Save metrics to `results/{task_name}_metrics_test.csv`
 
 ### Tier 3: Inference on Unseen Clients
@@ -240,17 +234,12 @@ This will:
 Evaluate the global model on completely new clients without fine-tuning:
 
 ```bash
-python src/tiers/tier3_infer.py task=interval
-```
-
-Or using the shell script:
-```bash
 bash scripts/run_t3.sh
 ```
 
 This will:
 - Load the trained global model
-- Evaluate on clients 7, 8, 9 (by default)
+- Evaluate on clients 
 - Save metrics to `results/{task_name}_metrics_test.csv`
 
 ## Algorithm Details
@@ -260,8 +249,9 @@ This will:
 The FedMAP algorithm (Tier 1) involves each client $k$ minimising a local objective function. This objective is based on Maximum a Posteriori (MAP) estimation and combines the local data loss with a global, learnable ICNN-based prior (see Eq 7 in the paper):
 
 $$
-\theta_{k}^{*} = \underset{\theta \in \Theta}{\arg\min} \left\{ \frac{1}{N_{k}}\mathcal{L}(\theta; Z_{k}) + \mathcal{R}(\theta; \mu, \psi) \right\}
+\theta_{k}^{*} = \underset{\theta \in \Theta}{\arg\min} \left( \frac{1}{N_{k}}\mathcal{L}(\theta; Z_{k}) + \mathcal{R}(\theta; \mu, \psi) \right)
 $$
+
 
 Where:
 
