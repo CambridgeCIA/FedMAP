@@ -1,0 +1,4 @@
+task-name="eicu"
+model="MultimodalFFN"
+num-server-rounds = 5
+local-epochs = 5

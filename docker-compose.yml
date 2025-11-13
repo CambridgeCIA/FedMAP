@@ -5,6 +5,7 @@ services:
     platform: linux/amd64
     build: .
     container_name: fedmap_container
+    shm_size: 100gb
     volumes:
       - .:/app
     tty: true

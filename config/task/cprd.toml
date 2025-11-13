@@ -1,0 +1,4 @@
+task-name="cprd"
+model="CoxPH"
+num-server-rounds = 5
+local-epochs = 5

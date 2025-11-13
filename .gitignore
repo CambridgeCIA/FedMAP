@@ -3,8 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 outputs/
-datasets/synthetic/
-src/model_temp/
+datasets/cprd/
+datasets/eicu/
+datasets/interval/
+src/checkpoints/
 # C extensions
 *.so
 datasets/public/
@@ -34,9 +36,7 @@ MANIFEST
 .pdm.toml
 .pdm-python
 .pdm-build/
-.datasets/public/*
-.datasets/synthetic/*
-*.csv
+# *.csv
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/

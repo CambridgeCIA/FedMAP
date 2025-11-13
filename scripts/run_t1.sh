@@ -1,0 +1,1 @@
+flwr run . --run-config="./config/task/example.toml"

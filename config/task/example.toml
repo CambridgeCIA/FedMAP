@@ -1,0 +1,3 @@
+task-name="example"
+num-server-rounds = 100
+local-epochs = 10

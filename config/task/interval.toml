@@ -1,0 +1,4 @@
+task-name="interval"
+model="DenseClassifier"
+num-server-rounds = 5
+local-epochs = 5

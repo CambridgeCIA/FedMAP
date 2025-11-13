@@ -1,0 +1,1 @@
+python src/tiers/tier2_finetune.py task=interval

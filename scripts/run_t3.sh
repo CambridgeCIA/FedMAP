@@ -1,0 +1,1 @@
+python src/tiers/tier3_infer.py task=interval
